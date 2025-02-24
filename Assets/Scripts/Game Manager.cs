@@ -3,6 +3,8 @@ using TMPro;
 using Unity.Netcode;
 using System;
 using System.Collections;
+using UnityEngine.Networking;
+
 
 public class GameManager : NetworkBehaviour
 {
@@ -13,8 +15,12 @@ public class GameManager : NetworkBehaviour
 
     public TMP_Text lblHealth;
 
+    public TMP_Dropdown dropdownNames;
+
     NetworkVariable<float> countDown = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    
+    //Id nickname jugador
+    NetworkVariable<int> nickId = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone,
+                                      NetworkVariableWritePermission.Owner);
     enum GameState
     {
          lobby, //Esperando que se conecten jugadores
@@ -22,7 +28,11 @@ public class GameManager : NetworkBehaviour
         griefing //Dañar players
     }
     GameState state;
-    
+    public struct NamesData
+    {
+        public string[] names;
+    }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -30,7 +40,44 @@ public class GameManager : NetworkBehaviour
         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConncected;
         lblHealth.text = "";
 
+        //Descargar lista de nombres permitidos
+        StartCoroutine(TryGetNames());
+
        
+    }
+
+    IEnumerator TryGetNames()
+    {
+        //Crear la peticion al endpoint
+        UnityWebRequest www = UnityWebRequest.Get("http://monsterballgo.com/api/names");
+        //Enviar la peticion
+        yield return www.SendWebRequest();
+        if(www.result == UnityWebRequest.Result.Success)
+        {
+            //parsear la respuesta
+            NamesData namesData = JsonUtility.FromJson<NamesData>(www.downloadHandler.text);
+            //Mostrar los nombrs en consola
+            dropdownNames.options.Clear();
+            foreach(var name in namesData.names)
+            {
+                dropdownNames.options.Add(new TMP_Dropdown.OptionData(name));
+            }
+            dropdownNames.RefreshShownValue();
+            dropdownNames.onValueChanged.AddListener(OnNameChanged);
+           
+
+        }else
+        {
+            Debug.LogError("Error al descargar los nombres: " + www.error);
+        }
+
+    }
+
+     void OnNameChanged(int index)
+    {
+        if(IsOwner)
+            nickId.Value = index;
+        Debug.Log("Cambio nombre a " + dropdownNames.options[index].text + " con indice" + index);
     }
 
     private void OnClientConncected(ulong clientId)

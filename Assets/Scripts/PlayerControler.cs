@@ -14,9 +14,7 @@ public class PlayerControler : NetworkBehaviour
     //vida
     NetworkVariable<int> health = new NetworkVariable<int>(100,NetworkVariableReadPermission.Everyone,
                                       NetworkVariableWritePermission.Server);
-    //Id nickname jugador
-    NetworkVariable<int> nickId = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone,
-                                      NetworkVariableWritePermission.Owner);
+
 
     NetworkVariable<bool> isBerserker = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone,
                                       NetworkVariableWritePermission.Server);
