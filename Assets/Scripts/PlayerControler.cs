@@ -3,24 +3,29 @@ using System.Linq.Expressions;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
+using TMPro;
 
 
 public class PlayerControler : NetworkBehaviour
 {
+    GameManager gameManager;
+    TMP_Text lblName; //nombre del jugador creado por el GM.
+
     [Header("Cosas para moverse asi bien rico")]
     public Vector3 desiredDir;
     //rapidez
     public float RunSpeed;
     //vida
-    NetworkVariable<int> health = new NetworkVariable<int>(100,NetworkVariableReadPermission.Everyone,
+    NetworkVariable<int> health = new NetworkVariable<int>(100, NetworkVariableReadPermission.Everyone,
                                       NetworkVariableWritePermission.Server);
 
-
+    NetworkVariable<int> nickId = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone,
+                                     NetworkVariableWritePermission.Owner);
     NetworkVariable<bool> isBerserker = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone,
                                       NetworkVariableWritePermission.Server);
 
 
-   
+
     [Tooltip("En estado de berserk, cuanto se va a mover de rapido extra")]
     public float multBerserk = 2;
     [Header("SFX")]
@@ -31,7 +36,9 @@ public class PlayerControler : NetworkBehaviour
 
     AudioSource audioSource;
 
-    GameManager gameManager;
+
+
+
 
 
     void Start()
@@ -39,12 +46,22 @@ public class PlayerControler : NetworkBehaviour
         desiredDir = Vector3.zero;
         gameManager = GameObject.Find("Game Manager").GetComponent<GameManager>();
         audioSource = GetComponent<AudioSource>();
+        lblName = Instantiate(gameManager.playerNameTemplate,
+          gameManager.playerNameTemplate.transform.parent);
+
+        lblName.enabled = true;
+
+        //Conectar el nombre del id con el dropdown
+        if(IsOwner)
+        {
+            nickId.Value = gameManager.dropdownNames.value;
+        }
     }
     public override void OnNetworkSpawn()
     {
+        isBerserker.OnValueChanged += SetBerserk;
+      
 
-            isBerserker.OnValueChanged += SetBerserk;
-        
     }
 
     void Update()
@@ -71,29 +88,36 @@ public class PlayerControler : NetworkBehaviour
 
             //Actualizar HUD
             gameManager.lblHealth.text = health.Value + "";
+
+          
+        }
+        if (lblName != null)
+        {
+            lblName.text = gameManager.dropdownNames.options[nickId.Value].text;
+            lblName.transform.position = Camera.main.WorldToScreenPoint(transform.position) + new Vector3(0, 150, 0);
         }
     }
 
     [ServerRpc]
     void ResquestSetBerserk_ServerRpc(bool newState)
     {
-        Debug.Log("Request de berserk" +" "+newState);
-        isBerserker.Value = !isBerserker.Value;   
+        Debug.Log("Request de berserk" + " " + newState);
+        isBerserker.Value = !isBerserker.Value;
     }
 
     //Activar efectos de particulas
-    public void SetBerserk(bool old, bool nuevo )
+    public void SetBerserk(bool old, bool nuevo)
     {
         if (psBerkserk != null)
         {
 
             psBerkserk.gameObject.SetActive(isBerserker.Value);
-               //Activar Sonido.
-         
+            //Activar Sonido.
+
         }
     }
 
-     public void TakeDamage(int damage)
+    public void TakeDamage(int damage)
     {
         if (isAlive())
         {
@@ -109,8 +133,8 @@ public class PlayerControler : NetworkBehaviour
             }
         }
     }
-    
-    
+
+
     bool isAlive()
     {
         return health.Value > 0;

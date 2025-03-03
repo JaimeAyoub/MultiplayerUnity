@@ -10,6 +10,8 @@ public class GameManager : NetworkBehaviour
 {
     [Header("Cosas del HUD")]
     public RectTransform panelHUD;
+    public RectTransform panelMainMenu;
+    public RectTransform panelLogin;
 
     public TMP_Text lblcountdown;
 
@@ -17,10 +19,12 @@ public class GameManager : NetworkBehaviour
 
     public TMP_Dropdown dropdownNames;
 
+    public TMP_Text playerNameTemplate;
+    
+
     NetworkVariable<float> countDown = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     //Id nickname jugador
-    NetworkVariable<int> nickId = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone,
-                                      NetworkVariableWritePermission.Owner);
+   
     enum GameState
     {
          lobby, //Esperando que se conecten jugadores
@@ -43,6 +47,8 @@ public class GameManager : NetworkBehaviour
         //Descargar lista de nombres permitidos
         StartCoroutine(TryGetNames());
 
+
+        playerNameTemplate.enabled = false;
        
     }
 
@@ -75,8 +81,7 @@ public class GameManager : NetworkBehaviour
 
      void OnNameChanged(int index)
     {
-        if(IsOwner)
-            nickId.Value = index;
+   
         Debug.Log("Cambio nombre a " + dropdownNames.options[index].text + " con indice" + index);
     }
 
@@ -133,5 +138,12 @@ public class GameManager : NetworkBehaviour
             }
             yield return new WaitForSeconds(1);
         }
+    }
+
+    public void OnPlayerNameChoosed()
+    {
+        Debug.Log("Nombre: " + dropdownNames.options[dropdownNames.value].text);
+        panelMainMenu.gameObject.SetActive(true);
+        panelLogin.gameObject.SetActive(false);
     }
 }
