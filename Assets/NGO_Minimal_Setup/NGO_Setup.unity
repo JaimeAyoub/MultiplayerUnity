@@ -3276,10 +3276,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 59fb0945f3d4046d383e99d25802608f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mainMenu: {fileID: 8471262847237930806}
-  HUD: {fileID: 910232379}
   m_StartHostButton: {fileID: 569680618856850118}
   m_StartClientButton: {fileID: 3532660689149901526}
+  mainmenuCanvas: {fileID: 6893285409185845113}
+  HUDCanvas: {fileID: 910232378}
 --- !u!224 &6615610067901176404
 RectTransform:
   m_ObjectHideFlags: 0

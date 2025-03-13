@@ -8,8 +8,7 @@ using UnityEngine.Networking;
 
 public class GameManager : NetworkBehaviour
 {
-    [Header("Cosas del HUD")]
-    public RectTransform panelHUD;
+    [Header("Cosas del HUD")] public RectTransform panelHUD;
     public RectTransform panelMainMenu;
     public RectTransform panelLogin;
 
@@ -20,18 +19,21 @@ public class GameManager : NetworkBehaviour
     public TMP_Dropdown dropdownNames;
 
     public TMP_Text playerNameTemplate;
-    
 
-    NetworkVariable<float> countDown = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    NetworkVariable<float> countDown = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
     //Id nickname jugador
-   
+
     enum GameState
     {
-         lobby, //Esperando que se conecten jugadores
+        lobby, //Esperando que se conecten jugadores
 
-        griefing //Dañar players
+        griefing //Daï¿½ar players
     }
+
     GameState state;
+
     public struct NamesData
     {
         public string[] names;
@@ -44,12 +46,12 @@ public class GameManager : NetworkBehaviour
         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConncected;
         lblHealth.text = "";
 
+
         //Descargar lista de nombres permitidos
         StartCoroutine(TryGetNames());
 
 
         playerNameTemplate.enabled = false;
-       
     }
 
     IEnumerator TryGetNames()
@@ -58,36 +60,34 @@ public class GameManager : NetworkBehaviour
         UnityWebRequest www = UnityWebRequest.Get("http://monsterballgo.com/api/names");
         //Enviar la peticion
         yield return www.SendWebRequest();
-        if(www.result == UnityWebRequest.Result.Success)
+        if (www.result == UnityWebRequest.Result.Success)
         {
             //parsear la respuesta
             NamesData namesData = JsonUtility.FromJson<NamesData>(www.downloadHandler.text);
             //Mostrar los nombrs en consola
             dropdownNames.options.Clear();
-            foreach(var name in namesData.names)
+            foreach (var name in namesData.names)
             {
                 dropdownNames.options.Add(new TMP_Dropdown.OptionData(name));
             }
+
             dropdownNames.RefreshShownValue();
             dropdownNames.onValueChanged.AddListener(OnNameChanged);
-           
-
-        }else
+        }
+        else
         {
             Debug.LogError("Error al descargar los nombres: " + www.error);
         }
-
     }
 
-     void OnNameChanged(int index)
+    void OnNameChanged(int index)
     {
-   
         Debug.Log("Cambio nombre a " + dropdownNames.options[index].text + " con indice" + index);
     }
 
     private void OnClientConncected(ulong clientId)
     {
-       if(IsServer && NetworkManager.Singleton.ConnectedClientsList.Count == 1)
+        if (IsServer && NetworkManager.Singleton.ConnectedClientsList.Count == 1)
         {
             countDown.Value = 15;
         }
@@ -95,7 +95,6 @@ public class GameManager : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-       
     }
 
     // Update is called once per frame
@@ -112,30 +111,30 @@ public class GameManager : NetworkBehaviour
                 }
                 else
                 {
-                    state = GameState.griefing;
-                    StartCoroutine(GriefPlayer());
+                    // state = GameState.griefing;
+                    // StartCoroutine(GriefPlayer());
                     countDown.Value = 0;
                 }
             }
         }
 
-        if(countDown.Value > 0)
+        if (countDown.Value > 0)
         {
             lblcountdown.text = string.Format("{0:F1}", countDown.Value);
         }
     }
-       
 
 
-    //Prueba del sistema de vida y daño
+    //Prueba del sistema de vida y daï¿½o
     IEnumerator GriefPlayer()
     {
-        while(true)
+        while (true)
         {
-            foreach(var player in NetworkManager.Singleton.ConnectedClientsList)
+            foreach (var player in NetworkManager.Singleton.ConnectedClientsList)
             {
-                player.PlayerObject.GetComponent<PlayerControler>().TakeDamage(UnityEngine.Random.Range(1,10));
+                player.PlayerObject.GetComponent<PlayerControler>().TakeDamage(UnityEngine.Random.Range(1, 10));
             }
+
             yield return new WaitForSeconds(1);
         }
     }
